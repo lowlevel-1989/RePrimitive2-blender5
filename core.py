@@ -499,14 +499,44 @@ def copy_modifiers_and_delete_original(original_ob: bpy.types.Object, new_ob: bp
     parent = original_ob.parent
     name = original_ob.name
 
-    # Copy over display type and shading
-    new_ob.display_type = original_ob.display_type
-    if original_ob.data.use_auto_smooth:
-        bpy.ops.object.shade_smooth(
-            use_auto_smooth=True, auto_smooth_angle=original_ob.data.auto_smooth_angle)
-    else:  # Didn't have autosmooth but polygons are still smooth, use shade smooth without default variables
-        if original_ob.data.polygons and original_ob.data.polygons[0].use_smooth:
-            bpy.ops.object.shade_smooth()
+    # Compatibility check: Get the auto_smooth_angle from the original object
+    # In Blender < 4.1 it's in .data; in 4.1+ it's usually in the "Smooth by Angle" modifier
+    original_angle = 0.523599  # Default fallback (30 degrees)
+
+    if hasattr(original_ob.data, "auto_smooth_angle"):
+        # Legacy Blender version
+        original_angle = original_ob.data.auto_smooth_angle
+        has_auto_smooth = original_ob.data.use_auto_smooth
+        
+        if has_auto_smooth:
+            bpy.ops.object.shade_smooth(
+                use_auto_smooth=True, 
+                auto_smooth_angle=original_angle
+            )
+        else:  # Didn't have autosmooth but polygons are still smooth, use shade smooth without default variables
+            if original_ob.data.polygons and original_ob.data.polygons[0].use_smooth:
+                bpy.ops.object.shade_smooth()
+    else:
+        # Blender 4.1, 4.2, 5.0+ logic
+        # In these versions, shade_smooth() no longer takes auto_smooth_angle as an argument
+        has_auto_smooth = any(p.use_smooth for p in original_ob.data.polygons)
+    
+        # Try to find the angle in the modifier if it exists
+        modifier = original_ob.modifiers.get("Smooth by Angle")
+        if modifier and "Angle" in modifier:
+            original_angle = modifier["Angle"]
+        elif "Auto Smooth" in original_ob.modifiers: # Sometimes named differently
+            original_angle = original_ob.modifiers["Auto Smooth"]["Angle"]
+
+        if has_auto_smooth:
+            bpy.ops.object.shade_smooth_by_angle(angle=original_angle)
+            
+            mod = bpy.context.object.modifiers.get("Smooth by Angle")
+            if mod:
+                mod["Input_1"] = original_angle # In GeoNodes, Angle is usually Input_1
+        else:  # Didn't have autosmooth but polygons are still smooth, use shade smooth without default variables
+            if original_ob.data.polygons and original_ob.data.polygons[0].use_smooth:
+                bpy.ops.object.shade_smooth()
 
     # Remember all the collections the object belonged to since we will delete it
     original_collections = original_ob.users_collection
