@@ -30,12 +30,10 @@ class RePrimitivePanel(Panel):
 
         # Rotate button
         row = layout.row()
-        row.scale_y = 1.6
         row.operator("object.fix_applied_rotation", text="Fix Rotation")
 
         # RePrimitive button
         row = layout.row()
-        row.scale_y = 1.6
         row.operator("object.reprimitive", text="RePrimitive")
 
         # Call built-in function with draw code/checks.
