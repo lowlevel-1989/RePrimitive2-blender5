@@ -1,4 +1,6 @@
-# RePrimitive
+# RePrimitive V2
+
+*Note*: This fork is not intended to replace the original *RePrimitive* repository. Its sole purpose is to provide compatibility with the *Blender 4.1+ and 5.* APIs for version 2, acting as a bridge until the official release of v3.
 
 [![GitHub release](https://img.shields.io/github/release/eXzacT/RePrimitive.svg)](https://github.com/eXzacT/RePrimitive/releases/)
 ![Updated Badge](https://badges.pufler.dev/updated/eXzacT/RePrimitive)
